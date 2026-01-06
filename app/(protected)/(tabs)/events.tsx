@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScaledSheet } from 'react-native-size-matters';
+                import Icon from 'react-native-vector-icons/Ionicons'; // Add this import
 
 const API_BASE_URL = 'http://3.7.81.243/projects/plie-api/public/api';
 
@@ -265,12 +266,17 @@ export default function EventsScreen() {
                   style={styles.favoriteButton}
                   onPress={() => toggleFavorite(event)}
                 >
-                  <Text style={[
-                    styles.favoriteIcon,
-                    isFavorite(event.event_id) && styles.favoriteIconFilled
-                  ]}>
-                    {isFavorite(event.event_id) ? '♥' : '♡'}
-                  </Text>
+
+<TouchableOpacity
+  style={styles.favoriteButton}
+  onPress={() => toggleFavorite(event)}
+>
+  <Icon
+    name={isFavorite(event.event_id) ? 'heart' : 'heart-outline'}
+    size={24}
+    color={isFavorite(event.event_id) ? '#ff4757' : '#999'}
+  />
+</TouchableOpacity>
                 </TouchableOpacity>
               </View>
               
