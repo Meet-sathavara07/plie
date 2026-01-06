@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScaledSheet } from 'react-native-size-matters';
-                import Icon from 'react-native-vector-icons/Ionicons'; // Add this import
+import Icon from 'react-native-vector-icons/Ionicons'; // Add this import
 
 const API_BASE_URL = 'http://3.7.81.243/projects/plie-api/public/api';
 
@@ -35,108 +35,64 @@ export default function EventsScreen() {
 
   useEffect(() => {
     fetchEvents();
-    // loadFavorites();
+    loadFavorites();
   }, []);
 
   const fetchEvents = async () => {
-  try {
-    setIsLoading(true);
-    setError(null);
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Mock data matching the exact old API structure
-    const mockResponse = {
-      success: true,
-      message: "",
-      data: {
-        events: [
-          {
-            event_id: 216,
-            event_name: "Mondays Social Outdoor",
-            description: "Dear lovely dance family🥰💃🏽🕺\r\n\r\nWeekly outdoor social dancing in the park!\r\nBachata, Salsa & Kizomba vibes 🌳",
-            event_profile_img: "https://via.placeholder.com/300/ff4757/ffffff?text=BACHATA", // Placeholder since real image gone
-            event_price_from: 0,
-            event_price_to: 0,
-            readable_from_date: "Every Monday",
-            readable_to_date: "",
-            isFavorite: 0,
-            city: "Berlin",
-            country: "Germany",
-            keywords: ["Social", "Bachata", "Outdoor"],
-            danceStyles: [
-              { ds_id: 1, ds_name: "Bachata" },
-              { ds_id: 3, ds_name: "Kizomba" },
-              { ds_id: 2, ds_name: "Salsa" }
-            ],
-            event_date_id: 1
-          },
-          {
-            event_id: 217,
-            event_name: "Berlin Bachata Congress",
-            description: "International festival with workshops, shows and parties!",
-            event_profile_img: "https://via.placeholder.com/300/ff4757/ffffff?text=FESTIVAL",
-            event_price_from: 89,
-            event_price_to: 149,
-            readable_from_date: "15.03.2026",
-            readable_to_date: "17.03.2026",
-            isFavorite: 0,
-            city: "Berlin",
-            country: "Germany",
-            keywords: ["Congress", "Workshops", "Party"],
-            danceStyles: [
-              { ds_id: 1, ds_name: "Bachata" }
-            ],
-            event_date_id: 2
-          },
-          {
-            event_id: 218,
-            event_name: "Salsa Night at Club Havana",
-            description: "Hot salsa night with live band and DJ!",
-            event_profile_img: "https://via.placeholder.com/300/c44569/ffffff?text=SALSA",
-            event_price_from: 10,
-            event_price_to: 15,
-            readable_from_date: "25.01.2026",
-            readable_to_date: "",
-            isFavorite: 0,
-            city: "Madrid",
-            country: "Spain",
-            keywords: ["Party", "Live Music"],
-            danceStyles: [
-              { ds_id: 2, ds_name: "Salsa" }
-            ],
-            event_date_id: 3
-          }
-        ],
-        total: 3
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const authToken = await AsyncStorage.getItem('userToken');
+      
+      if (!authToken) {
+        setError('No authentication token found');
+        return;
       }
-    };
 
-    if (mockResponse.success) {
-      const eventsData = mockResponse.data.events || [];
-      setEvents(eventsData);
-      console.log('Mock events loaded:', eventsData.length);
+      console.log('Calling API with token:', authToken);
+
+      const response = await fetch(
+        `${API_BASE_URL}/events-listing`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            Accept: 'application/json',
+          },
+        }
+      );
+
+      console.log('Response status:', response.status);
+      const json = await response.json();
+      console.log('API RESPONSE:', json);
+
+      if (json.success) {
+        const eventsData = json.data?.events || [];
+        setEvents(eventsData);
+        console.log('Events loaded:', eventsData.length);
+      } else {
+        setError(json.message || 'API returned error');
+      }
+    } catch (err: any) {
+      console.error('Fetch error:', err);
+      setError('Failed to load events');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error: any) {
-    setError('Failed to load events');
-    console.error(error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
-  // const loadFavorites = async () => {
-  //   try {
-  //     const favorites = await AsyncStorage.getItem('favoriteEvents');
-  //     if (favorites) {
-  //       const favoriteIds = JSON.parse(favorites).map((event: Event) => event.event_id);
-  //       setFavoriteEvents(favoriteIds);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error loading favorites:', error);
-  //   }
-  // };
+  const loadFavorites = async () => {
+    try {
+      const favorites = await AsyncStorage.getItem('favoriteEvents');
+      if (favorites) {
+        const favoriteIds = JSON.parse(favorites).map((event: Event) => event.event_id);
+        setFavoriteEvents(favoriteIds);
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+  };
 
   const toggleFavorite = async (event: Event) => {
     try {
@@ -266,17 +222,11 @@ export default function EventsScreen() {
                   style={styles.favoriteButton}
                   onPress={() => toggleFavorite(event)}
                 >
-
-<TouchableOpacity
-  style={styles.favoriteButton}
-  onPress={() => toggleFavorite(event)}
->
-  <Icon
-    name={isFavorite(event.event_id) ? 'heart' : 'heart-outline'}
-    size={24}
-    color={isFavorite(event.event_id) ? '#ff4757' : '#999'}
-  />
-</TouchableOpacity>
+                  <Icon
+                    name={isFavorite(event.event_id) ? 'heart' : 'heart-outline'}
+                    size={24}
+                    color={isFavorite(event.event_id) ? '#ff4757' : '#999'}
+                  />
                 </TouchableOpacity>
               </View>
               
